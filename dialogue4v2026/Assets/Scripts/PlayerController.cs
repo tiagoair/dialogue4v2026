@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -15,8 +14,13 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Maximum horizontal speed (m/s). Set to <= 0 to disable clamping.")]
     public float maxSpeed = 6f;
 
+    private bool m_IsInteracting;
+
     Rigidbody m_Rigidbody;
     Vector2 m_MoveInput;
+
+    private static Action OnPlayerInteractionStarted;
+    private static Action OnPlayerInteractionPerformed;
 
     void Awake()
     {
@@ -33,14 +37,28 @@ public class PlayerController : MonoBehaviour
             context => {m_MoveInput = Vector2.zero;};
 
         playerInput.actions.FindAction("Interact").performed += OnInteract;
-    }
 
-    
+        OnPlayerInteractionStarted += StartInteraction;
+        OnPlayerInteractionPerformed += EndInteraction;
+    }
 
     void OnDisable()
     {
         playerInput.actions.FindAction("Move").performed -= OnMovePerformed;
         playerInput.actions.FindAction("Interact").performed -= OnInteract;
+
+        OnPlayerInteractionStarted -= StartInteraction;
+        OnPlayerInteractionPerformed -= EndInteraction;
+    }
+
+    public static void InteractionStarted()
+    {
+        OnPlayerInteractionStarted?.Invoke();
+    }
+
+    public static void InteractionPerformed()
+    {
+        OnPlayerInteractionPerformed?.Invoke();
     }
 
     void OnMovePerformed(InputAction.CallbackContext ctx)
@@ -52,6 +70,12 @@ public class PlayerController : MonoBehaviour
     {
         if (m_Rigidbody == null)
             return;
+
+        if (m_IsInteracting)
+        {
+            m_Rigidbody.linearVelocity = Vector3.zero;
+            return;
+        }
 
         // Convert 2D input (x,y) to world X,Z movement
         Vector3 desired = new Vector3(m_MoveInput.x, 0f, m_MoveInput.y);
@@ -75,10 +99,27 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-    
+
     private void OnInteract(InputAction.CallbackContext obj)
     {
-        InteractOM.Interact();
+        if (!m_IsInteracting)
+        {
+            InteractOM.PlayerInteracted();
+            return;
+        }
+        else
+        {
+            DialogueOM.DialogueFinished();
+        }
+    }
+
+    private void StartInteraction()
+    {
+        m_IsInteracting = true;
+    }
+
+    private void EndInteraction()
+    {
+        m_IsInteracting = false;
     }
 }
-

@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class DialogueNPC : MonoBehaviour
@@ -9,7 +8,7 @@ public class DialogueNPC : MonoBehaviour
     public Sprite NPCImage => dialogueNpcSo.npcImage;
     public Color NPCColor => dialogueNpcSo.npcColor;
     public string[] DialogueLines => dialogueNpcSo.dialogueLines.ToArray();
-    
+
     private bool isInteractable;
 
     private void Start()
@@ -21,8 +20,8 @@ public class DialogueNPC : MonoBehaviour
     {
         if (other.tag == "Player" && !isInteractable)
         {
-            InteractOM.OnInteract += ShowDialogue;
             isInteractable = true;
+            InteractOM.OnPlayerInteracted += ShowDialogue;
             InteractOM.ShowInteraction(isInteractable);
             InteractOM.PositionChange(transform.position);
         }
@@ -32,15 +31,16 @@ public class DialogueNPC : MonoBehaviour
     {
         if (other.tag == "Player" && isInteractable)
         {
-            InteractOM.OnInteract -= ShowDialogue;
             isInteractable = false;
             InteractOM.ShowInteraction(isInteractable);
+            InteractOM.OnPlayerInteracted -= ShowDialogue;
         }
     }
 
     private void ShowDialogue()
     {
-        Debug.Log(NPCName+": "+DialogueLines[0]);
+        PlayerController.InteractionStarted();
+
         DialogueOM.SubmitName(NPCName);
         DialogueOM.SubmitImage(NPCImage);
         DialogueOM.SubmitDialogue(DialogueLines[0]);

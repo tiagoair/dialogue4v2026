@@ -9,7 +9,14 @@ public static class InteractOM
     {
         OnInteract?.Invoke();
     }
-    
+
+    public static event Action OnPlayerInteracted;
+
+    public static void PlayerInteracted()
+    {
+        OnPlayerInteracted?.Invoke();
+    }
+
     public static event Action<bool> OnShowInteraction;
     
     public static void ShowInteraction(bool value)
